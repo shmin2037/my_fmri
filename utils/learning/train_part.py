@@ -30,7 +30,14 @@ def train_epoch(args, epoch, model, data_loader, optimizer, loss_type):
         maximum = maximum.cuda(non_blocking=True)
 
         output = model(kspace, mask)
-        loss = loss_type(output, target, maximum)
+        
+        # 패딩된 부분을 무시하고 손실 계산
+        valid_slices = mask.sum(dim=(1, 2, 3)) != 0
+        output_valid = output[valid_slices]
+        target_valid = target[valid_slices]
+
+        loss = loss_type(output_valid, target_valid, maximum[valid_slices])
+        
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -47,7 +54,6 @@ def train_epoch(args, epoch, model, data_loader, optimizer, loss_type):
     total_loss = total_loss / len_loader
     return total_loss, time.perf_counter() - start_epoch
 
-
 def validate(args, model, data_loader):
     model.eval()
     reconstructions = defaultdict(dict)
@@ -61,9 +67,13 @@ def validate(args, model, data_loader):
             mask = mask.cuda(non_blocking=True)
             output = model(kspace, mask)
 
-            for i in range(output.shape[0]):
-                reconstructions[fnames[i]][int(slices[i])] = output[i].cpu().numpy()
-                targets[fnames[i]][int(slices[i])] = target[i].numpy()
+            valid_slices = mask.sum(dim=(1, 2, 3)) != 0
+            output_valid = output[valid_slices]
+            target_valid = target[valid_slices]
+
+            for i in range(output_valid.shape[0]):
+                reconstructions[fnames[i]][int(slices[i])] = output_valid[i].cpu().numpy()
+                targets[fnames[i]][int(slices[i])] = target_valid[i].numpy()
 
     for fname in reconstructions:
         reconstructions[fname] = np.stack(
@@ -145,7 +155,6 @@ def train(args):
     best_val_loss = 1.
     start_epoch = 0
 
-    
     train_loader = create_data_loaders(data_path = args.data_path_train, args = args, shuffle=True)
     val_loader = create_data_loaders(data_path = args.data_path_val, args = args)
     

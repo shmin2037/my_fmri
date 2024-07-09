@@ -18,19 +18,12 @@ class SliceData(Dataset):
             image_files = list(Path(root / "image").iterdir())
             for fname in sorted(image_files):
                 num_slices = self._get_metadata(fname)
-
-                self.image_examples += [
-                    (fname, slice_ind) for slice_ind in range(num_slices)
-                ]
+                self.image_examples += [(fname, slice_ind) for slice_ind in range(num_slices)]
 
         kspace_files = list(Path(root / "kspace").iterdir())
         for fname in sorted(kspace_files):
             num_slices = self._get_metadata(fname)
-
-            self.kspace_examples += [
-                (fname, slice_ind) for slice_ind in range(num_slices)
-            ]
-
+            self.kspace_examples += [(fname, slice_ind) for slice_ind in range(num_slices)]
 
     def _get_metadata(self, fname):
         with h5py.File(fname, "r") as hf:
@@ -50,7 +43,8 @@ class SliceData(Dataset):
 
         with h5py.File(kspace_fname, "r") as hf:
             input = hf[self.input_key][dataslice]
-            mask =  np.array(hf["mask"])
+            mask = np.array(hf["mask"])
+        
         if self.forward:
             target = -1
             attrs = -1
@@ -58,9 +52,21 @@ class SliceData(Dataset):
             with h5py.File(image_fname, "r") as hf:
                 target = hf[self.target_key][dataslice]
                 attrs = dict(hf.attrs)
-            
-        return self.transform(mask, input, target, attrs, kspace_fname.name, dataslice)
 
+        # Padding to 16 slices
+        input_padded, target_padded, mask_padded = self.pad_slices(input, target, mask)
+
+        return self.transform(mask_padded, input_padded, target_padded, attrs, kspace_fname.name, dataslice)
+
+    def pad_slices(self, input, target, mask, max_slices=16):
+        num_slices = input.shape[0]
+        pad_width = ((0, max_slices - num_slices), (0, 0), (0, 0))
+
+        input_padded = np.pad(input, pad_width, mode='constant')
+        target_padded = np.pad(target, pad_width, mode='constant')
+        mask_padded = np.pad(mask, pad_width, mode='constant', constant_values=1)
+
+        return input_padded, target_padded, mask_padded
 
 def create_data_loaders(data_path, args, shuffle=False, isforward=False):
     if isforward == False:
@@ -69,12 +75,13 @@ def create_data_loaders(data_path, args, shuffle=False, isforward=False):
     else:
         max_key_ = -1
         target_key_ = -1
+
     data_storage = SliceData(
         root=data_path,
         transform=DataTransform(isforward, max_key_),
         input_key=args.input_key,
         target_key=target_key_,
-        forward = isforward
+        forward=isforward
     )
 
     data_loader = DataLoader(
