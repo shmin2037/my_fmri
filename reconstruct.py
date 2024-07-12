@@ -4,7 +4,11 @@ import os, sys
 if os.getcwd() + '/utils/model/' not in sys.path:
     sys.path.insert(1, os.getcwd() + '/utils/model/')
 
+<<<<<<< HEAD
 from utils.learning.custom_test_part import forward
+=======
+from utils.learning.test_part import forward
+>>>>>>> 4d45521160f79d1167cdcdc8c82b99f7a4a447f7
 import time
     
 def parse():
@@ -12,13 +16,21 @@ def parse():
                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-g', '--GPU_NUM', type=int, default=0, help='GPU number to allocate')
     parser.add_argument('-b', '--batch-size', type=int, default=1, help='Batch size')
+<<<<<<< HEAD
     parser.add_argument('-n', '--net_name', type=Path, default='test_unet', help='Name of network')
+=======
+    parser.add_argument('-n', '--net_name', type=Path, default='test_varnet', help='Name of network')
+>>>>>>> 4d45521160f79d1167cdcdc8c82b99f7a4a447f7
     parser.add_argument('-p', '--path_data', type=Path, default='/Data/leaderboard/', help='Directory of test data')
     
     parser.add_argument('--cascade', type=int, default=1, help='Number of cascades | Should be less than 12')
     parser.add_argument('--chans', type=int, default=9, help='Number of channels for cascade U-Net')
     parser.add_argument('--sens_chans', type=int, default=4, help='Number of channels for sensitivity map U-Net')
+<<<<<<< HEAD
     parser.add_argument("--input_key", type=str, default='input_image', help='Name of input key')
+=======
+    parser.add_argument("--input_key", type=str, default='kspace', help='Name of input key')
+>>>>>>> 4d45521160f79d1167cdcdc8c82b99f7a4a447f7
 
     args = parser.parse_args()
     return args

@@ -29,6 +29,12 @@ class SSIMLoss(nn.Module):
         self.cov_norm = NP / (NP - 1)
 
     def forward(self, X, Y, data_range):
+<<<<<<< HEAD
+=======
+        X = X.unsqueeze(1)
+        Y = Y.unsqueeze(1)
+        data_range = data_range[:, None, None, None]
+>>>>>>> 4d45521160f79d1167cdcdc8c82b99f7a4a447f7
         C1 = (self.k1 * data_range) ** 2
         C2 = (self.k2 * data_range) ** 2
         ux = F.conv2d(X, self.w)
@@ -49,4 +55,7 @@ class SSIMLoss(nn.Module):
         S = (A1 * A2) / D
 
         return 1 - S.mean()
+<<<<<<< HEAD
 
+=======
+>>>>>>> 4d45521160f79d1167cdcdc8c82b99f7a4a447f7
